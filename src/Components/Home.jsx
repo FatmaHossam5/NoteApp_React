@@ -18,17 +18,31 @@ export default function Home() {
 
   // Helper function to close modals
   const closeModal = (modalId) => {
-    const modalElement = document.getElementById(modalId);
-    if (modalElement) {
-      const modal = window.bootstrap?.Modal?.getInstance(modalElement);
-      if (modal) {
-        modal.hide();
-      } else {
-        // Fallback: trigger the close button
-        const closeButton = modalElement.querySelector('[data-bs-dismiss="modal"]');
-        if (closeButton) closeButton.click();
+    try {
+      const modalElement = document.getElementById(modalId);
+      if (modalElement) {
+        const modal = window.bootstrap?.Modal?.getInstance(modalElement);
+        if (modal) {
+          modal.hide();
+        } else {
+          // Fallback: trigger the close button
+          const closeButton = modalElement.querySelector('[data-bs-dismiss="modal"]');
+          if (closeButton) closeButton.click();
+        }
       }
+    } catch (error) {
+      console.error('Error closing modal:', error);
     }
+  };
+
+  // Helper function to reset note state
+  const resetNoteState = () => {
+    setNote({
+      "title":"",
+      "desc":"",
+      "userID": userID || null,
+      "token": token || null
+    });
   };
 
   // Initialize token and user data
@@ -139,6 +153,34 @@ export default function Home() {
     }
   }, [userID, token, baseUrl]);
 
+  // Separate function to refresh notes without loading state (for after updates)
+  const refreshNotes = useCallback(async () => {
+    if (!userID || !token) {
+      return;
+    }
+
+    try {
+      // Get all notes for the authenticated user
+      let {data} = await axios.get(baseUrl+"note/notes",{
+        headers:{
+          Authorization: `Bearer${token}`
+        }
+      });
+      
+      if(data?.message === "Notes retrieved successfully"){
+        setNotes(data.notes || []);
+        setError(null);
+      } else {
+        // If unexpected response, show empty state
+        setNotes([]);
+        setError(null);
+      }
+    } catch (error) {
+      console.error("Error refreshing notes:", error);
+      // Don't clear notes on refresh error, just log it
+    }
+  }, [userID, token, baseUrl]);
+
   // Fetch notes when userID and token are available
   useEffect(() => {
     if (userID && token) {
@@ -151,8 +193,10 @@ export default function Home() {
   
   
 function getNote({target}){
-  setNote({...note,[target.name]:target.value})
- 
+  setNote(prevNote => ({
+    ...prevNote,
+    [target.name]: target.value
+  }));
 } 
  async function addNote (e){
 e.preventDefault()
@@ -210,11 +254,11 @@ e.preventDefault()
       // Show success message
       setSuccessMessage("Note created successfully!");
       
-      // Close modal
-      closeModal('exampleModal');
+      // Refresh notes list first
+      await refreshNotes();
       
-      // Refresh notes list
-      await getUserNote();
+      // Close modal after notes are refreshed
+      closeModal('exampleModal');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -282,7 +326,7 @@ Swal.fire(
   'Your file has been deleted.',
   'success'
 )
-getUserNote();
+refreshNotes();
         }else{
          
           Swal.fire({
@@ -297,9 +341,36 @@ getUserNote();
     })
 }
 function getNoteID(NoteIndex){
-  document.querySelector('#exampleModal1 input' ).value=notes[NoteIndex].title;
-  document.querySelector('#exampleModal1 textarea' ).value=notes[NoteIndex].desc;
-  setNote({...note,'title':notes[NoteIndex].title,"des":notes[NoteIndex].desc,NoteID:notes[NoteIndex]._id});
+  const selectedNote = notes[NoteIndex];
+  if (selectedNote) {
+    try {
+      // Set form values with error handling
+      const titleInput = document.querySelector('#exampleModal1 input');
+      const descTextarea = document.querySelector('#exampleModal1 textarea');
+      
+      if (titleInput) {
+        titleInput.value = selectedNote.title || '';
+      }
+      if (descTextarea) {
+        descTextarea.value = selectedNote.desc || '';
+      }
+      
+      // Update state with the selected note data
+      setNote({
+        title: selectedNote.title || '',
+        desc: selectedNote.desc || '',
+        NoteID: selectedNote._id
+      });
+    } catch (error) {
+      console.error('Error setting form values:', error);
+      // Still update the state even if DOM manipulation fails
+      setNote({
+        title: selectedNote.title || '',
+        desc: selectedNote.desc || '',
+        NoteID: selectedNote._id
+      });
+    }
+  }
 }
 async function updateNote(e){
   e.preventDefault()
@@ -325,6 +396,17 @@ async function updateNote(e){
     return;
   }
 
+  // Validate note ID
+  if (!note.NoteID) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Note ID is missing. Please try again.',
+      confirmButtonColor: '#1ab188'
+    });
+    return;
+  }
+
   setIsUpdatingNote(true);
   
   try {
@@ -334,22 +416,31 @@ async function updateNote(e){
       // userID is extracted from JWT token by backend, not needed in request body
     };
 
-    let{data} = await axios.put(baseUrl+'note/update/'+note._id, noteData, {
+    let{data} = await axios.put(baseUrl+'note/update/'+note.NoteID, noteData, {
     headers:{
         Authorization: `Bearer${token}`,
         'Content-Type': 'application/json'
       }
     });
+   
     
-    if(data?.message === "updated"){
+    if(data?.message === "Note updated successfully"){
       // Success flow
-      document.getElementById('edit-form').reset();
+      try {
+        const editForm = document.getElementById('edit-form');
+        if (editForm) {
+          editForm.reset();
+        }
+      } catch (error) {
+        console.error('Error resetting form:', error);
+      }
+      resetNoteState();
       
-      // Close modal
+      // Refresh notes list first
+      await refreshNotes();
+      
+      // Close modal after notes are refreshed
       closeModal('exampleModal1');
-      
-      // Refresh notes list
-      await getUserNote();
       
       // Show success toast
       Swal.fire({
@@ -599,7 +690,7 @@ async function updateNote(e){
                                     <i className="fas fa-edit me-2" aria-hidden="true"></i>
                                     Edit Note
                                 </h5>
-                                <button type="button" className="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" className="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close" onClick={resetNoteState}></button>
                             </div>
                             <div className="modal-body modern-modal-body">
                                 <div className="form-group mb-3">
@@ -639,6 +730,7 @@ async function updateNote(e){
                                     className="btn btn-secondary modern-btn-secondary" 
                                     data-bs-dismiss="modal"
                                     disabled={isUpdatingNote}
+                                    onClick={resetNoteState}
                                 >
                                     <i className="fas fa-times me-2" aria-hidden="true"></i>
                                     Cancel
