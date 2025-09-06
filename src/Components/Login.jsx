@@ -1,51 +1,208 @@
 import axios from 'axios'
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+
 export default function Login() {
-    let baseURL='https://route-movies-api.vercel.app/'
+    const baseURL = 'https://note-app-node-js.vercel.app/api/v1/'
+    const navigate = useNavigate()
     
-    let navigate=useNavigate()
-const [user,setUser]=useState({"email":"","password":""})
-const [error,setError]=useState("")
-const[isLoading,setIsLoading]=useState(false)
- async function logIn(e){
-    e.preventDefault()
-    setIsLoading(true)
-    let {data}=await axios.post(baseURL+'signin',user)
-    setIsLoading(false)
+    const [user, setUser] = useState({
+        email: "",
+        password: ""
+    })
+    const [error, setError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
+    const [validationErrors, setValidationErrors] = useState({})
 
-    if(data.message=="success"){
-        localStorage.setItem("Token",data.token)//3
-navigate('/home')
-    }else{
-        setError(data.message)
+    const validateForm = () => {
+        const errors = {}
+        
+        if (!user.email) {
+            errors.email = "Email is required"
+        } else if (!/\S+@\S+\.\S+/.test(user.email)) {
+            errors.email = "Please enter a valid email address"
+        }
+        
+        if (!user.password) {
+            errors.password = "Password is required"
+        } else if (user.password.length < 6) {
+            errors.password = "Password must be at least 6 characters"
+        }
+        
+        setValidationErrors(errors)
+        return Object.keys(errors).length === 0
     }
-}
-function getUser(e){
-setUser({...user,
-    
-    [e.target.name]:e.target.value})
-}
-  return (
-    <>
-    <div className="container my-5 py-5">
-                <div className="col-md-5 m-auto text-center">
-                    <form onSubmit={logIn} >
-                      
-                        <div className="form-group">
-                            <input onChange={getUser} placeholder="Enter email" type="email" name="email" className="form-control" />
-                        </div>
-                        <div className="form-group my-2">
-                            <input onChange={getUser}  placeholder="Enter you password" type="password" name="password" className=" form-control" />
-                        </div>
-                        <button type="submit" className={'btn btn-info w-100'+ (isLoading? " disabled":"")}> {isLoading? <i className="fa fa-spinner fa-spin" aria-hidden="true"></i> : 'Login'}  </button>
 
-                        {error&& <div className="alert alert-danger mt-2">
-                        {  error}
-                        </div>}
-                    </form>
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        setUser(prev => ({ ...prev, [name]: value }))
+        
+        // Clear validation error when user starts typing
+        if (validationErrors[name]) {
+            setValidationErrors(prev => ({ ...prev, [name]: "" }))
+        }
+        
+        // Clear general error when user starts typing
+        if (error) {
+            setError("")
+        }
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        
+        if (!validateForm()) {
+            return
+        }
+        
+        setIsLoading(true)
+        setError("")
+        
+        try {
+            console.log('Attempting login with:', { email: user.email, password: '***' });
+            console.log('API URL:', baseURL + 'auth/login');
+            
+            const { data } = await axios.post(baseURL + 'auth/login', user)
+            
+            console.log('Login API Response:', data); // Debug log
+            
+            if (data.message && data.message.includes("success")) {
+                localStorage.setItem("token", data.token)
+                navigate('/') // Navigate to home page (root route)
+            } else {
+                setError(data.message || 'Login failed. Please check your credentials.')
+            }
+        } catch (err) {
+            console.error('Login Error:', err); // Debug log
+            console.error('Error Response:', err.response); // Debug log
+            
+            if (err.response?.status === 401) {
+                setError('Invalid email or password. Please check your credentials.')
+            } else if (err.response?.status === 404) {
+                setError('Login service not found. Please try again later.')
+            } else if (err.response?.status >= 500) {
+                setError('Server error. Please try again later.')
+            } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+                setError('Network error. Please check your internet connection.')
+            } else {
+                setError(err.response?.data?.message || 'Login failed. Please try again.')
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <div className="login-container">
+            <div className="login-card">
+                <div className="login-header">
+                    <h1 className="login-title">Welcome Back</h1>
+                    <p className="login-subtitle">Sign in to your account to continue</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="login-form" noValidate>
+                    <div className="form-group">
+                        <label htmlFor="email" className="form-label">
+                            Email Address <span className="required">*</span>
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={user.email}
+                            onChange={handleInputChange}
+                            className={`form-control ${validationErrors.email ? 'is-invalid' : ''}`}
+                            placeholder="Enter your email address"
+                            disabled={isLoading}
+                            autoComplete="email"
+                            aria-describedby={validationErrors.email ? "email-error" : undefined}
+                        />
+                        {validationErrors.email && (
+                            <div id="email-error" className="invalid-feedback">
+                                {validationErrors.email}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password" className="form-label">
+                            Password <span className="required">*</span>
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={user.password}
+                            onChange={handleInputChange}
+                            className={`form-control ${validationErrors.password ? 'is-invalid' : ''}`}
+                            placeholder="Enter your password"
+                            disabled={isLoading}
+                            autoComplete="current-password"
+                            aria-describedby={validationErrors.password ? "password-error" : undefined}
+                        />
+                        {validationErrors.password && (
+                            <div id="password-error" className="invalid-feedback">
+                                {validationErrors.password}
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        type="submit"
+                        className={`login-btn ${isLoading ? 'loading' : ''}`}
+                        disabled={isLoading}
+                        aria-label={isLoading ? "Signing in..." : "Sign in"}
+                    >
+                        {isLoading ? (
+                            <>
+                                <i className="fa fa-spinner fa-spin" aria-hidden="true"></i>
+                                <span>Signing in...</span>
+                            </>
+                        ) : (
+                            <>
+                                <i className="fa fa-sign-in" aria-hidden="true"></i>
+                                <span>Sign In</span>
+                            </>
+                        )}
+                    </button>
+
+                    {error && (
+                        <div className="alert" role="alert" aria-live="polite">
+                            <i className="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Debug API Test Button */}
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            try {
+                                console.log('Testing API connection...');
+                                const response = await axios.get(baseURL + 'auth/test');
+                                console.log('API Test Response:', response.data);
+                                setError('API Test: ' + JSON.stringify(response.data));
+                            } catch (err) {
+                                console.error('API Test Error:', err);
+                                setError('API Test Failed: ' + (err.response?.data?.message || err.message));
+                            }
+                        }}
+                        className="btn btn-secondary btn-sm mt-2"
+                        style={{fontSize: '12px'}}
+                    >
+                        Test API Connection
+                    </button>
+                </form>
+
+                <div className="login-footer">
+                    <p>
+                        Don't have an account? 
+                        <Link to="/signup" className="register-link">
+                            Create one here
+                        </Link>
+                    </p>
                 </div>
             </div>
-    </>
-  )
+        </div>
+    )
 }
