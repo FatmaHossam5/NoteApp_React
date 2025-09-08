@@ -1,11 +1,13 @@
 import axios from 'axios'
 import jwt_decode from 'jwt-decode'
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2';
 
 
 export default function Home() {
   let baseUrl='https://note-app-node-js.vercel.app/api/v1/';
+  const navigate = useNavigate();
   const[notes,setNotes]=useState([])
   const[note,setNote]=useState({"title":"","desc":""})
   const[loading,setLoading]=useState(true)
@@ -505,14 +507,14 @@ async function updateNote(e){
                 <div className="d-flex gap-3 justify-content-center">
                   <button 
                     className="btn btn-primary modern-add-btn"
-                    onClick={() => window.location.href = '/login'}
+                    onClick={() => navigate('/login')}
                   >
                     <i className="fas fa-sign-in-alt me-2"></i>
                     Go to Login
                   </button>
                   <button 
                     className="btn btn-secondary modern-btn-secondary"
-                    onClick={() => window.location.href = '/register'}
+                    onClick={() => navigate('/register')}
                   >
                     <i className="fas fa-user-plus me-2"></i>
                     Create Account

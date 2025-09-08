@@ -72,7 +72,7 @@ export default function Login() {
             
             if (data.message && data.message.includes("success")) {
                 localStorage.setItem("token", data.token)
-                navigate('/') // Navigate to home page (root route)
+                navigate('/home') // Navigate to home page
             } else {
                 setError(data.message || 'Login failed. Please check your credentials.')
             }
