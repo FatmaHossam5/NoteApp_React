@@ -62,7 +62,11 @@ export default function Login() {
             console.log('Attempting login with:', { email: user.email, password: '***' });
             console.log('API URL:', baseURL + 'auth/login');
             
-            const { data } = await axios.post(baseURL + 'auth/login', user)
+            const { data } = await axios.post(baseURL + 'auth/login', user, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
             
             console.log('Login API Response:', data); // Debug log
             

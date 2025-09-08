@@ -123,7 +123,7 @@ export default function Home() {
       // Get all notes for the authenticated user
       let {data} = await axios.get(baseUrl+"note/notes",{
         headers:{
-          Authorization: `Bearer${token}`
+          Authorization: `Bearer ${token}`
         }
       });
       
@@ -163,7 +163,7 @@ export default function Home() {
       // Get all notes for the authenticated user
       let {data} = await axios.get(baseUrl+"note/notes",{
         headers:{
-          Authorization: `Bearer${token}`
+          Authorization: `Bearer ${token}`
         }
       });
       
@@ -232,7 +232,7 @@ e.preventDefault()
       // userID is extracted from JWT token by backend, not needed in request body
     };
     // Debug: Log the exact Authorization header being sent
-    const authHeader = `Bearer${token}`;
+    const authHeader = `Bearer ${token}`;
     console.log('Authorization header being sent:', authHeader);
     console.log('Token length:', token?.length);
     console.log('Token starts with:', token?.substring(0, 20));
@@ -316,7 +316,7 @@ e.preventDefault()
     if (result.isConfirmed) {
         axios.delete(baseUrl+'note/delete/'+NoteID,{
         headers:{
-          Authorization: `Bearer${token}`
+          Authorization: `Bearer ${token}`
         }
         }).then((response)=>{
         if(response.data?.message==="deleted"){
@@ -418,7 +418,7 @@ async function updateNote(e){
 
     let{data} = await axios.put(baseUrl+'note/update/'+note.NoteID, noteData, {
     headers:{
-        Authorization: `Bearer${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
