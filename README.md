@@ -68,10 +68,16 @@ A modern, responsive note-taking application built with React that helps you org
 
 ## 🌐 API Integration
 
-This app connects to a Node.js backend API for:
+This app connects to a custom-built Node.js backend API that I developed for:
 - User authentication and authorization
 - CRUD operations for notes
 - Data persistence and retrieval
+
+The API provides a robust backend infrastructure that handles all the server-side logic and database operations for the note-taking application.
+
+**Backend Resources:**
+- 🌐 **Live API**: [https://note-app-node-js.vercel.app/](https://note-app-node-js.vercel.app/)
+- 📁 **Source Code**: [https://github.com/FatmaHossam5/NoteApp_NodeJs](https://github.com/FatmaHossam5/NoteApp_NodeJs)
 
 ## 📄 Project Structure
 

@@ -59,16 +59,11 @@ export default function Login() {
         setError("")
         
         try {
-            console.log('Attempting login with:', { email: user.email, password: '***' });
-            console.log('API URL:', baseURL + 'auth/login');
-            
             const { data } = await axios.post(baseURL + 'auth/login', user, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             })
-            
-            console.log('Login API Response:', data); // Debug log
             
             if (data.message && data.message.includes("success")) {
                 localStorage.setItem("token", data.token)
@@ -77,8 +72,7 @@ export default function Login() {
                 setError(data.message || 'Login failed. Please check your credentials.')
             }
         } catch (err) {
-            console.error('Login Error:', err); // Debug log
-            console.error('Error Response:', err.response); // Debug log
+           
             
             if (err.response?.status === 401) {
                 setError('Invalid email or password. Please check your credentials.')

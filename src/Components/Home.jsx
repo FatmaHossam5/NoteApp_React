@@ -33,7 +33,7 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Error closing modal:', error);
+      setError('Error closing modal: ' + error.message);
     }
   };
 
@@ -71,15 +71,14 @@ export default function Home() {
         // Check if token is expired
         const currentTime = Math.floor(Date.now() / 1000);
         if (decoded.exp && decoded.exp < currentTime) {
-          console.log('Token is expired!');
           setError("Your session has expired. Please login again.");
           localStorage.removeItem("token");
           setLoading(false);
           return;
         }
 
-        // Check for user ID in various possible fields
-        const userId = decoded._id || decoded.id || decoded.userId || decoded.user_id;
+        // Check for user ID in various possible fields (backend sends 'id')
+        const userId = decoded.id || decoded._id || decoded.userId || decoded.user_id;
         
         if (!userId) {
           setError("Token missing user ID. Please login again.");
@@ -93,7 +92,6 @@ export default function Home() {
         setNote(prev => ({...prev, userID: userId, token: storedToken}));
         setError(null);
       } catch (error) {
-        console.error("Token validation error:", error);
         setError("Invalid token format. Please login again.");
         localStorage.removeItem("Token");
         setLoading(false);
@@ -125,10 +123,9 @@ export default function Home() {
       // Get all notes for the authenticated user
       let {data} = await axios.get(baseUrl+"note/notes",{
         headers:{
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer${token}`
         }
       });
-      
       if(data?.message === "Notes retrieved successfully"){
         setNotes(data.notes || []);
         setError(null);
@@ -138,7 +135,7 @@ export default function Home() {
         setError(null);
       }
     } catch (error) {
-      console.error("Error fetching notes:", error);
+      setError("Error fetching notes: " + error.message);
       
       if (error.response?.status === 401) {
         setNotes([]);
@@ -165,7 +162,7 @@ export default function Home() {
       // Get all notes for the authenticated user
       let {data} = await axios.get(baseUrl+"note/notes",{
         headers:{
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer${token}`
         }
       });
       
@@ -178,7 +175,7 @@ export default function Home() {
         setError(null);
       }
     } catch (error) {
-      console.error("Error refreshing notes:", error);
+      setError("Error refreshing notes: " + error.message);
       // Don't clear notes on refresh error, just log it
     }
   }, [userID, token, baseUrl]);
@@ -233,11 +230,7 @@ e.preventDefault()
       desc: note.desc.trim()
       // userID is extracted from JWT token by backend, not needed in request body
     };
-    // Debug: Log the exact Authorization header being sent
-    const authHeader = `Bearer ${token}`;
-    console.log('Authorization header being sent:', authHeader);
-    console.log('Token length:', token?.length);
-    console.log('Token starts with:', token?.substring(0, 20));
+    const authHeader = `Bearer${token}`;
     
     const response = await axios.post(baseUrl+"note/add", noteData, {
       headers: {
@@ -280,7 +273,7 @@ e.preventDefault()
       throw new Error(data?.message || 'Failed to create note');
     }
   } catch (error) {
-    console.error("Error creating note:", error);
+    setError("Error creating note: " + error.message);
     
     // Handle different error types
     if (error.response?.status === 401) {
@@ -318,7 +311,7 @@ e.preventDefault()
     if (result.isConfirmed) {
         axios.delete(baseUrl+'note/delete/'+NoteID,{
         headers:{
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer${token}`
         }
         }).then((response)=>{
         if(response.data?.message==="Note deleted successfully"){
@@ -364,7 +357,7 @@ function getNoteID(NoteIndex){
         NoteID: selectedNote._id
       });
     } catch (error) {
-      console.error('Error setting form values:', error);
+      setError('Error setting form values: ' + error.message);
       // Still update the state even if DOM manipulation fails
       setNote({
         title: selectedNote.title || '',
@@ -420,7 +413,7 @@ async function updateNote(e){
 
     let{data} = await axios.put(baseUrl+'note/update/'+note.NoteID, noteData, {
     headers:{
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -434,7 +427,7 @@ async function updateNote(e){
           editForm.reset();
         }
       } catch (error) {
-        console.error('Error resetting form:', error);
+        setError('Error resetting form: ' + error.message);
       }
       resetNoteState();
       
@@ -458,7 +451,7 @@ async function updateNote(e){
       throw new Error(data?.message || 'Failed to update note');
     }
   } catch (error) {
-    console.error("Error updating note:", error);
+    setError("Error updating note: " + error.message);
     
     if (error.response?.status === 401) {
       setError("Session expired. Please login again.");
@@ -555,7 +548,7 @@ async function updateNote(e){
                             
                             {/* Success Message */}
                             {successMessage && (
-                                <div className="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                                <div className="alert-success alert-dismissible fade show mt-3" role="alert">
                                     <i className="fas fa-check-circle me-2"></i>
                                     {successMessage}
                                     <button 

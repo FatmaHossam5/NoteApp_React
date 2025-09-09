@@ -54,7 +54,6 @@ export default function Register() {
         setIsLoading(true)
         try {
             let {data}=await axios.post(baseURL+'auth/signup',user)
-            console.log(data)
             
             if(data.message && data.message.includes("success")){
                 navigate('/login')
@@ -62,7 +61,6 @@ export default function Register() {
                 setError(data.message || 'Registration failed')
             }
         } catch (err) {
-            console.error('Registration error:', err)
             if (err.response?.status === 404) {
                 setError('Registration endpoint not found. Please contact support.')
             } else if (err.response?.status === 500) {

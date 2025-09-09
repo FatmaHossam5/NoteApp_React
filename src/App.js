@@ -5,6 +5,7 @@ import Home from './Components/Home'
 import Register from './Components/Register';
 import Login from './Components/Login';
 import ErrorBoundary from './Components/ErrorBoundary';
+import jwt_decode from 'jwt-decode';
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -13,7 +14,8 @@ function ProtectedRoute({ children }) {
   // Check if token exists and is not expired
   if (token) {
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const decoded = jwt_decode(token);
+      // Backend sends { id: user._id } in token payload
       const currentTime = Math.floor(Date.now() / 1000);
       
       // If token is expired, remove it and redirect to login
@@ -39,7 +41,8 @@ function PublicRoute({ children }) {
   
   if (token) {
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const decoded = jwt_decode(token);
+      // Backend sends { id: user._id } in token payload
       const currentTime = Math.floor(Date.now() / 1000);
       
       // If token is valid and not expired, redirect to home
