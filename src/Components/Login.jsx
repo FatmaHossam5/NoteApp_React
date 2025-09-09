@@ -177,25 +177,6 @@ export default function Login() {
                         </div>
                     )}
 
-                    {/* Debug API Test Button */}
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            try {
-                                console.log('Testing API connection...');
-                                const response = await axios.get(baseURL + 'auth/test');
-                                console.log('API Test Response:', response.data);
-                                setError('API Test: ' + JSON.stringify(response.data));
-                            } catch (err) {
-                                console.error('API Test Error:', err);
-                                setError('API Test Failed: ' + (err.response?.data?.message || err.message));
-                            }
-                        }}
-                        className="btn btn-secondary btn-sm mt-2"
-                        style={{fontSize: '12px'}}
-                    >
-                        Test API Connection
-                    </button>
                 </form>
 
                 <div className="login-footer">
